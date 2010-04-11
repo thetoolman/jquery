@@ -226,6 +226,34 @@ test("bind(), trigger change on select", function() {
 	}).trigger('change');
 });
 
+test("receive change event on formElements triggered outside of jQuery", function() {
+	var formElements = jQuery("textarea, input:not([type='hidden']), select").filter(":not(:disabled)");
+	expect(formElements.length);
+
+	var handler = function(event) {
+		ok( event, "JQuery handler: " + event.target.nodeName + " : " + jQuery(event.target).attr("type") );
+	};
+	var externalTrigger = function(rawNode, eventName) {
+		// external to JQuery triggered event in iE
+		if( document.createEventObject ) { 
+			rawNode.fireEvent("on" + eventName);
+			
+		// external to JQuery triggered event in other browsers
+		} else if( document.createEvent ) {
+			var evObj = document.createEvent('HTMLEvents');
+			evObj.initEvent( eventName, true, true );
+			rawNode.dispatchEvent(evObj);
+		}
+	}
+
+	formElements.bind("change", handler);
+	formElements.each(function(i,e){ 
+		externalTrigger(this, "change"); 
+	});
+	formElements.unbind("change", handler);
+});
+
+
 test("bind(), namespaced events, cloned events", function() {
 	expect(6);
 
